@@ -2,6 +2,8 @@ import { Router } from "express";
 import Joi from "joi";
 import { User } from "../models/User";
 import { registrationValidate } from "../validations/user";
+import bcrypt from "bcrypt";
+
 let userRouter = Router();
 
 userRouter.post('/register', async (req, res) => {
@@ -11,10 +13,10 @@ userRouter.post('/register', async (req, res) => {
     if (error) res.status(400).send({ error: error });
 
     const emailExists = await User.findOne({email: req.body.email});
-    if(emailExists) return req.status(400).send({error: "Email already exists"});
+    if(emailExists) return res.status(400).send({error: "Email already exists"});
 
     const nameExists = await User.findOne({name: req.body.name});
-    if(nameExists) return req.status(400).send({error: "Username already exists"});
+    if(nameExists) return res.status(400).send({error: "Username already exists"});
 
     const genSalt = await bcrypt.genSalt(10);
     const password = await bcrypt.hash(req.body.password, genSalt);
