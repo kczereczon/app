@@ -1,25 +1,12 @@
-import express from "express"
-import { initDatabase } from "./core/database";
-import dotenv from "dotenv";
-import { userRouter } from "./routes/user";
 import bodyParser from "body-parser";
+import express from "express";
+import { userRouter } from "./routes/user";
 
-//load env files
-dotenv.config();
+var app = express();
 
-//initialization mongodb
-let connection = initDatabase();
+var jsonParser = bodyParser.json()
 
-connection.then(() => {
-    var app = express();
-    
-    var jsonParser = bodyParser.json()
+app.use('/api/user/', jsonParser, userRouter)
 
-    app.use('/api/user/', jsonParser, userRouter)
+export {app}
 
-    app.listen(3333, () => {
-        console.log("Server running on http://localhost:3333");
-    })
-}).catch((error) => {
-    console.log(error);
-});
