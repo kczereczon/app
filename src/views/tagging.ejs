@@ -16,9 +16,21 @@
         <div class="flex-1 shadow rounded-lg bg-white p-5">
             <h1 class="text-2xl bold">Tagowanie zdjęć i kategoryzacja</h1>
             <img class="rounded-lg mt-5 w-full" id="image" src="<%= image %>"><br>
-            <form method="POST" action="/add-place">
+            <form method="POST" class="flex flex-col gap-4" action="/add-place">
                 <input type="file" id="file"><br>
                 <input type="hidden" id="base64" name="base64">
+                <label for="name">Nazwa miejsca</label>
+                <input type="text" name="name" class="border-2 border-black rounded p-2">
+                <label for="name">Opis</label>
+                <textarea name="description" class="border-2 border-black rounded p-2"></textarea>
+                <label for="street">Ulica</label>
+                <input type="text" name="street" class="border-2 border-black rounded p-2">
+                <label for="number">Numer domu i numer mieszkania</label>
+                <input type="text" name="number" class="border-2 border-black rounded p-2">
+                <label for="postal_code">Kod pocztowy</label>
+                <input type="text" name="postal_code" class="border-2 border-black rounded p-2">
+                <label for="city">Miasto</label>
+                <input type="text" name="city" class="border-2 border-black rounded p-2">
 
                 <input class="mt-5 w-full p-2 rounded bg-blue-800 text-white" type="submit" value="Wyślij" id="send">
             </form>
