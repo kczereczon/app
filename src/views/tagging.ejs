@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+</head>
+
+<body>
+    <h1>Tagowanie zdjęć i kategoryzacja</h1>
+    <form method="POST" action="/add-place">
+        <input type="file" id="file">
+        <input type="hidden" id="base64" name="base64">
+        <img id="image" src="<%= image %>">
+        <input type="submit" value="Wyślij" id="send">
+    </form>
+    <% if (category) { %>
+        <h2>
+            <%= category %>
+        </h2>
+        <% } %>
+            <ul>
+                <% tags.forEach(function(tag){ %>
+                    <li>
+                        <%= tag.name %>: <%= tag.accurency %>
+                    </li>
+                    <% }); %>
+            </ul>
+            <script>
+                document.getElementById('file').addEventListener('change', () => {
+                    var reader = new FileReader();
+
+                    reader.onload = (e) => {
+                        document.getElementById('image').src = e.target.result;
+                        document.getElementById('base64').value = e.target.result;
+                    }
+
+                    reader.readAsDataURL(document.getElementById('file').files[0]);
+                })
+            </script>
+</body>
+
+</html>
