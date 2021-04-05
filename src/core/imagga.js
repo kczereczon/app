@@ -1,4 +1,10 @@
-request = (url, data) => {
+import axios from "axios";
+import dotenv from "dotenv"
+import FormData from "form-data"
+
+dotenv.config();
+
+const request = (url, data) => {
     return {
         method: 'post',
         url: `https://api.imagga.com/${url}`,
@@ -10,16 +16,47 @@ request = (url, data) => {
     }
 };
 
-const uploadImage = async (image_base64) => {
+export const uploadImage = async (image_base64) => {
     const data = new FormData();
     data.append('image_base64', image_base64);
 
-    let request = request('v2/uploads')
+    var config = request('v2/uploads', data);
 
     try {
         const response = await axios(config);
         return response.data.result.upload_id;
     } catch (error) {
-        res.json(error.response.data);
+        console.error(error.response.data);
+    }
+}
+
+export const categorize = async (image_base64) => {
+    const data = new FormData();
+    data.append('image_base64', image_base64);
+
+    var config = request('v2/categories/personal_photos', data)
+    
+    try {
+        const response = await axios(config);
+        return response.data;
+    } catch (error) {
+        console.error(error.response.data);
+        throw new Error(error);
+    }
+}
+
+export const taggorize = async (image_base64) => {
+    const data = new FormData();
+    data.append('image_base64', image_base64);
+
+    let config = request('v2/tags', data);
+    console.log(config)
+    
+    try {
+        const response = await axios(config);
+        return response.data;
+    } catch (error) {
+        console.error(error.response.data);
+        throw new Error(error);
     }
 }

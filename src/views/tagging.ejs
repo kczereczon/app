@@ -12,35 +12,39 @@
 <body>
     <h1>Tagowanie zdjęć i kategoryzacja</h1>
     <form method="POST" action="/add-place">
-        <input type="file" id="file">
+        <input type="file" id="file"><br>
         <input type="hidden" id="base64" name="base64">
-        <img id="image" src="<%= image %>">
+        <img id="image" src="<%= image %>"><br>
         <input type="submit" value="Wyślij" id="send">
     </form>
-    <% if (category) { %>
-        <h2>
-            <%= category %>
-        </h2>
-        <% } %>
-            <ul>
-                <% tags.forEach(function(tag){ %>
-                    <li>
-                        <%= tag.name %>: <%= tag.accurency %>
-                    </li>
-                    <% }); %>
-            </ul>
-            <script>
-                document.getElementById('file').addEventListener('change', () => {
-                    var reader = new FileReader();
+    <h1>Kategorie</h1>
+    <ul>
+        <% categories.forEach(function(category){ %>
+            <li>
+                <%= category.name.en %>: <%= category.confidence %>
+            </li>
+            <% }); %>
+    </ul>
+    <h1>Tagi</h1>
+    <ul>
+        <% tags.forEach(function(tag){ %>
+            <li>
+                <%= tag.tag.en %>: <%= tag.confidence %>
+            </li>
+            <% }); %>
+    </ul>
+    <script>
+        document.getElementById('file').addEventListener('change', () => {
+            var reader = new FileReader();
 
-                    reader.onload = (e) => {
-                        document.getElementById('image').src = e.target.result;
-                        document.getElementById('base64').value = e.target.result;
-                    }
+            reader.onload = (e) => {
+                document.getElementById('image').src = e.target.result;
+                document.getElementById('base64').value = e.target.result;
+            }
 
-                    reader.readAsDataURL(document.getElementById('file').files[0]);
-                })
-            </script>
+            reader.readAsDataURL(document.getElementById('file').files[0]);
+        })
+    </script>
 </body>
 
 </html>
