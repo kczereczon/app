@@ -7,32 +7,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+
 </head>
 
-<body>
-    <h1>Tagowanie zdjęć i kategoryzacja</h1>
-    <form method="POST" action="/add-place">
-        <input type="file" id="file"><br>
-        <input type="hidden" id="base64" name="base64">
-        <img id="image" src="<%= image %>"><br>
-        <input type="submit" value="Wyślij" id="send">
-    </form>
-    <h1>Kategorie</h1>
-    <ul>
-        <% categories.forEach(function(category){ %>
-            <li>
-                <%= category.name.en %>: <%= category.confidence %>
-            </li>
-            <% }); %>
-    </ul>
-    <h1>Tagi</h1>
-    <ul>
-        <% tags.forEach(function(tag){ %>
-            <li>
-                <%= tag.tag.en %>: <%= tag.confidence %>
-            </li>
-            <% }); %>
-    </ul>
+<body class="bg-blue-500">
+    <div class="flex w-1/2 mx-auto flex-col justify-center mt-5">
+        <div class="flex-1 shadow rounded-lg bg-white p-5">
+            <h1 class="text-2xl bold">Tagowanie zdjęć i kategoryzacja</h1>
+            <img class="rounded-lg mt-5 w-full" id="image" src="<%= image %>"><br>
+            <form method="POST" action="/add-place">
+                <input type="file" id="file"><br>
+                <input type="hidden" id="base64" name="base64">
+
+                <input class="mt-5 w-full p-2 rounded bg-blue-800 text-white" type="submit" value="Wyślij" id="send">
+            </form>
+        </div>
+        <% if(categories != []) { %>
+            <div class="flex-1 shadow rounded-lg bg-white p-5 mt-5">
+                <h1 class="text-lg">Kategorie</h1>
+                <div class="gap-2 pills flex flex-wrap">
+                    <% categories.forEach(function(category){ %>
+                        <div class="rounded shadow bg-blue-200 p-1"><%= category.name.en %></div>
+                    <% }); %>
+                </div>
+            </div>
+            <% } %>
+                <% if(tags != []) { %>
+                    <div class="flex-1 shadow rounded-lg bg-white p-5 mt-5">
+                        <h1 class="text-lg">Tagi</h1>
+                        <div class="gap-2 pills flex flex-wrap">
+                            <% tags.forEach(function(tag){ %>
+                            <div class="rounded shadow bg-yellow-300 p-1"><%= tag.tag.en %></div>
+                            <% }); %>
+                        </div>
+                    </div>
+                    <% } %>
+    </div>
     <script>
         document.getElementById('file').addEventListener('change', () => {
             var reader = new FileReader();

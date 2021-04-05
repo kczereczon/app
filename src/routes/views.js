@@ -13,11 +13,14 @@ viewsRouter.post('/add-place', async (req, res) => {
         var imaggaCategoryResponse = await categorize(req.body.base64);
     } catch (error) {
         res.json(error);
+        return 0;
     }
-    console.log(imaggaCategoryResponse.result.categories);
 
+    if(imaggaCategoryResponse.result) {
+        var categories = imaggaCategoryResponse.result.categories;
+    }
     res.render('tagging', {
-        categories: imaggaCategoryResponse.result.categories,
+        categories: categories,
         tags: imaggaTagsResponse.result.tags,
         image: req.body.base64
     });

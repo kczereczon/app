@@ -38,11 +38,14 @@ export const categorize = async (image_base64) => {
     
     try {
         const response = await axios(config);
+        console.log(response);
         return response.data;
     } catch (error) {
         console.error(error.response.data);
         throw new Error(error);
     }
+
+    return null;
 }
 
 export const taggorize = async (image_base64) => {
@@ -59,4 +62,6 @@ export const taggorize = async (image_base64) => {
         console.error(error.response.data);
         throw new Error(error);
     }
+
+    return null;
 }
