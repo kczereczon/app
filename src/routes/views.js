@@ -8,6 +8,10 @@ viewsRouter.get('/add-place', (req, res) => {
     res.render('tagging', { categories: [], tags: [], image: "" });
 })
 
+viewsRouter.get('/graph', (req, res) => {
+    res.render('graph');
+})
+
 viewsRouter.post('/add-place', async (req, res) => {
     try {
         var imaggaTagsResponse = await taggorize(req.body.base64);

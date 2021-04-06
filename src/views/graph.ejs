@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/d3-dispatch.v2.min.js"></script>
+    <script src="https://d3js.org/d3-quadtree.v2.min.js"></script>
+    <script src="https://d3js.org/d3-timer.v2.min.js"></script>
+    <script src="https://d3js.org/d3-force.v2.min.js"></script>
+    <style>
+        circle {
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="graph"></div>
+    <script>
+        (async function () {
+
+            var margin = { top: 10, right: 30, bottom: 30, left: 40 },
+                width = 2000 - margin.left - margin.right,
+                height = 2000 - margin.top - margin.bottom;
+
+            // append the svg object to the body of the page
+            var svg = d3.select("#graph")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+
+                    let links = [];
+                let nodes = [];
+                try {
+                    let responeLinks = await fetch('http://localhost:3333/api/places/links');
+                    let responeNodes = await fetch('http://localhost:3333/api/places/nodes');
+
+                    links = await responeLinks.json();
+                    nodes = await responeNodes.json();
+                } catch (error) {
+                    console.error(error.message);
+                }
+
+
+                // Initialize the links
+                var link = svg
+                    .selectAll("line")
+                    .data(links)
+                    .enter()
+                    .append("line")
+                    .style("stroke", "#aaa")
+
+                // Initialize the nodes
+                var enter = svg
+                    .selectAll("circle")
+                    .data(nodes)
+                    .enter()
+
+                var node = enter.append("circle")
+                    .attr("r", d => d.r)
+                    .style("fill", d => d.color)
+
+                var text = enter
+                    .append("text")
+                    .text(d => d.id)
+
+                // Let's list the force we wanna apply on the network
+                var simulation = d3.forceSimulation(nodes)                 // Force algorithm is applied to nodes
+                    .force("link", d3.forceLink()                               // This force provides links between nodes
+                        .id(function (d) { return d.id; })                     // This provide  the id of a node
+                        .links(links)                                    // and this the list of links
+                    )
+                    .force("charge", d3.forceManyBody().strength(-400))         // This adds repulsion between nodes. Play with the -400 for the repulsion strength
+                    .force("center", d3.forceCenter(width / 2, height / 2))     // This force attracts nodes to the center of the svg area
+                    .on("end", ticked);
+
+                // This function is run at each iteration of the force algorithm, updating the nodes position.
+                function ticked() {
+                    link
+                        .attr("x1", function (d) { return d.source.x; })
+                        .attr("y1", function (d) { return d.source.y; })
+                        .attr("x2", function (d) { return d.target.x; })
+                        .attr("y2", function (d) { return d.target.y; });
+
+                    node
+                        .attr("cx", function (d) { return d.x + 6; })
+                        .attr("cy", function (d) { return d.y - 6; });
+
+                    text
+                        .attr("dx", function (d) { return d.x + 6; })
+                        .attr("dy", function (d) { return d.y - 6; });
+                }
+                // const drag = (simulation) => {
+                //     function dragstarted(event, d) {
+                //         if (!event.active) simulation.alphaTarget(0.3).restart();
+                //         d.fx = d.x;
+                //         d.fy = d.y;
+                //     }
+
+                //     function dragged(event, d) {
+                //         d.fx = event.x;
+                //         d.fy = event.y;
+                //     }
+
+                //     function dragended(event, d) {
+                //         if (!event.active) simulation.alphaTarget(0);
+                //         d.fx = null;
+                //         d.fy = null;
+                //     }
+
+                //     return d3.drag()
+                //         .on("start", dragstarted)
+                //         .on("drag", dragged)
+                //         .on("end", dragended);
+                // }
+
+                // const height = 680;
+                // const width = 800;
+
+                
+
+
+                // const simulation = d3.forceSimulation(nodes)
+                //     .force("link", d3.forceLink(links).id(d => d.id))
+                //     .force("charge", d3.forceManyBody())
+                //     .force("x", d3.forceX())
+                //     .force("y", d3.forceY());
+
+                // const svg = d3.select('#graph').append("svg")
+                //     .attr("viewBox", [-width / 2, -height / 2, width, height]);
+
+                // const link = svg.append("line")
+                //     .attr("stroke", "#999")
+                //     .attr("stroke-opacity", 0.6)
+                //     .selectAll("line")
+                //     .data(links)
+
+
+                // const node = svg.append("circle")
+                //     .attr("stroke", "#fff")
+                //     .attr("stroke-width", 1.5)
+                //     .selectAll("circle")
+                //     .data(nodes)
+                //     .attr("r", 5)
+                //     .attr("fill", d => d.color)
+                //     .call(drag(simulation));
+
+                // node.append("title")
+                //     .text(d => d.id);
+
+                // simulation.on("tick", () => {
+                //     link
+                //         .attr("x1", d => d.source.x)
+                //         .attr("y1", d => d.source.y)
+                //         .attr("x2", d => d.target.x)
+                //         .attr("y2", d => d.target.y);
+
+                //     node
+                //         .attr("cx", d => d.x)
+                //         .attr("cy", d => d.y);
+                // });
+
+                // invalidation.then(() => simulation.stop());
+            })();
+    </script>
+</body>
+
+</html>
