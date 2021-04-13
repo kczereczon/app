@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "compile": "babel src --out-dir=dist",
-    "start": "nodemon --trace-warnings --exec babel-node src/server.js"
+    "start": "nodemon --trace-warnings --exec babel-node src/server.js",
+    "fetch-data": "babel-node src/tools/googlePlacesStripper.js"
   },
   "author": "Krzysztof Czereczon",
   "license": "ISC",

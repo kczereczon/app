@@ -1,4 +1,3 @@
-import { connect } from "mongodb";
 import mongoose from "mongoose";
 
 let initDatabase = () => {

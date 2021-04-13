@@ -29,7 +29,12 @@ const placeSchema = new Schema({
         number: {type: String},
         postal_code: {type: String},
         city: {type: String}
-    }
+    },
+    google_types: [String],
+    lat: {type: Number},
+    lng: {type: Number},
+    ai_tags: [String],
+    rating: {type: Number}
 }, { timestamps: true });
 
 const Place = model("Place", placeSchema);
