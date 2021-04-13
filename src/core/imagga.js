@@ -69,18 +69,17 @@ export const taggorize = async (image_base64) => {
 export const taggorizeUrl = async (image_url) => {
     try {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        const response = await axios.get(`https://api.imagga.com/v2/tags`, {
+
+        const response = await axios({url: `https://api.imagga.com/v2/tags`,
             params: { image_url: image_url },
             headers: {
                 'Authorization': `Basic ${process.env.IMAGGA_API_KEY}`
-            }
+            },
+            method: 'get',
         });
-        console.log((response.data));
         return response.data;
     } catch (error) {
         console.error(error.response.data);
         throw new Error(error);
     }
-
-    return null;
 }

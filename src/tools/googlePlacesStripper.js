@@ -3,6 +3,8 @@ const fs = require("fs");
 const dotenv = require("dotenv");
 import { taggorizeUrl } from "../core/imagga";
 import exit from "process";
+import { initDatabase } from "../core/database";
+import { Place } from "../models/Place";
 
 dotenv.config();
 
@@ -18,8 +20,13 @@ fs.readFile(myArgs[0], 'utf8', async function (err, data) {
     let matches = myArgs[0].match(regex);
     var voivodeship = matches[1];
 
+    try {
+        initDatabase();
+    } catch (error) {
+        throw error;
+    }
 
-    for (let index = 0; index < 1; index++) {
+    for (let index = 0; index < cities.length; index++) {
         const element = cities[index];
         let response = await axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json`, {
             params: {
@@ -28,10 +35,11 @@ fs.readFile(myArgs[0], 'utf8', async function (err, data) {
             }
         });
 
-        response.data.results.forEach(async (element) => {
-
+        for (let index2 in response.data.results) {
+            let element2 = response.data.results[index2];
+            console.log(`Fetching ${index2} element with name ${element2.name} in city ${element}`);
             try {
-                var photoReference = element.photos[0].photo_reference;
+                var photoReference = element2.photos[0].photo_reference;
             } catch (error) {
                 var photoReference = "";
             }
@@ -41,27 +49,53 @@ fs.readFile(myArgs[0], 'utf8', async function (err, data) {
                     params:
                     {
                         maxwidth: 600,
-                        photoreference: photoReference, 
+                        photoreference: photoReference,
                         key: process.env.GOOGLE_PLACES_API_KEY
                     }
+                })
+
+                let existingPlace = await Place.findOne({
+                    name: element2.name,
+                    lat: element2.geometry.location.lat,
+                    lng: element2.geometry.location.lng,
                 });
-    
-                let tags = await taggorizeUrl(photoReferenceResponse.request.res.responseUrl);
-                console.log(tags);
-                exit();
-                let object = {
-                    name: element.name,
-                    geometry: {
-                        lat: element.geometry.location.lat,
-                        lng: element.geometry.location.lng,
-                    },
-                    rating: element.rating,
-                    photo_reference: photoReference,
-                    address: { format: stripAddress(element.formatted_address), formatted_address: element.formatted_address }
+
+                if (existingPlace) { continue; }
+
+                await sleep(1000);
+                let aiTags = await taggorizeUrl(photoReferenceResponse.request.res.responseUrl);
+
+                var tags = [];
+                var otherTags = [];
+                aiTags.result.tags.forEach(({ tag, confidence }) => {
+                    if (confidence > 50) {
+                        tags.push(tag.en)
+                    } else {
+                        otherTags.push(tag.en)
+                    }
+                })
+
+                let newPlaceObject = {
+                    name: element2.name,
+                    lat: element2.geometry.location.lat,
+                    lng: element2.geometry.location.lng,
+                    rating: element2.rating,
+                    tags: tags,
+                    other_tags: otherTags,
+                    address: stripAddress(element2.formatted_address),
+                    image: photoReferenceResponse.request.res.responseUrl
                 }
-                console.log(object)
+
+                const place = new Place(newPlaceObject);
+
+                try {
+                    const newPlace = await place.save();
+                } catch (error) {
+                    console.error(error)
+                }
             }
-        });
+            console.log(`Ending fetching ${index2} element.`);
+        }
     }
 });
 
@@ -132,4 +166,8 @@ const stripPostalAndCity = (postalAndCityString, address) => {
     }
 
     return address;
+}
+
+async function sleep(millis) {
+    return new Promise(resolve => setTimeout(resolve, millis));
 }

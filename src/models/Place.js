@@ -12,16 +12,8 @@ const placeSchema = new Schema({
     description: {
         type: String,
         trim: true,
-        required: "Description is required",
         max: 2000,
         min: 4
-    },
-    category: {
-        type: String,
-        trim: false,
-        required: "Category is required",
-        max: 255,
-        min: 3
     },
     tags: [String],
     address: {
@@ -30,10 +22,10 @@ const placeSchema = new Schema({
         postal_code: {type: String},
         city: {type: String}
     },
-    google_types: [String],
+    image: {type: String},
     lat: {type: Number},
     lng: {type: Number},
-    ai_tags: [String],
+    other_tags: [String],
     rating: {type: Number}
 }, { timestamps: true });
 
