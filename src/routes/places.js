@@ -9,7 +9,6 @@ placesRouter.get('/nodes', async (req, res) => {
         var nodes = [];
 
         let tags = await Place.find().distinct('tags');
-        let categories = await Place.find().distinct('category');
         let places = await Place.find();
 
         tags.forEach(tag => {
@@ -17,12 +16,11 @@ placesRouter.get('/nodes', async (req, res) => {
         })
 
         places.forEach(place => {
+            if(place.tags.length) {
             nodes.push({id: place.name, color: 'green', r: 10});
+            }
         })
 
-        categories.forEach(category => {
-            nodes.push({id: category, color: 'red', r: 20});
-        })
 
         res.json(nodes)
     } catch (error) {
@@ -37,11 +35,11 @@ placesRouter.get('/links', async (req, res) => {
         let places = await Place.find();
 
         places.forEach(place => {
-            console.log(place);
+            if(place.tags.length) {
             place.tags.forEach(tag => {
                 links.push({target: tag, source: place.name, value: 2})
             })
-            links.push({source: place.category, target: place.name, value: 5})
+            }
         })
 
         res.json(links)

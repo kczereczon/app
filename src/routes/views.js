@@ -39,8 +39,6 @@ viewsRouter.post('/add-place', async (req, res) => {
         "address.city": req.body.city
     });
     if (existingPlace) return res.status(400).send({ error: "Place already exists" });
-
-    console.log(tags);
     const place = new Place({
         name: req.body.name,
         description: req.body.description,
