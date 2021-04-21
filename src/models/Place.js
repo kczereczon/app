@@ -23,11 +23,12 @@ const placeSchema = new Schema({
         city: {type: String}
     },
     image: {type: String},
-    lat: {type: Number},
-    lng: {type: Number},
+    location: [{type: Number}, {type: Number}],
     other_tags: [String],
     rating: {type: Number}
 }, { timestamps: true });
+
+placeSchema.index({location: '2dsphere'});
 
 const Place = model("Place", placeSchema);
 
