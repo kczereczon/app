@@ -1,5 +1,7 @@
 import { Router } from "express";
+import { logged } from "../middlewares/logged";
 import { Place } from "../models/Place";
+import { UserTag } from "../models/UserTag";
 // import cors from "cors"
 
 export const placesRouter = Router();
@@ -58,7 +60,7 @@ placesRouter.get('/', async (req, res) => {
     }
 })
 
-placesRouter.get('/around', async (req, res) => {
+placesRouter.get('/around', logged, async (req, res) => {
 
     const localization = {
         lat: 50.3487476,
@@ -96,6 +98,20 @@ placesRouter.get('/around', async (req, res) => {
         ]);
 
         res.json(places);
+    } catch (error) {
+        res.json(error.message)
+    }
+
+});
+
+placesRouter.get('/:id', logged, async (req, res) => {
+    
+    try {
+        let place = await Place.findById(req.params.id);
+        place.tags.forEach(async (tag) => {
+            await UserTag.create({user: req.user, tag: tag})
+        });
+        res.json(place);
     } catch (error) {
         res.json(error.message)
     }

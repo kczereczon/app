@@ -35,9 +35,9 @@ userRouter.post('/register', async (req, res) => {
         res.send(newUser);
     } catch (error) {
         if (error instanceof TypeError) {
-            res.status(400).send({ name: error.name, message: error.message, body: req.body });
+            return res.status(400).send({ name: error.name, message: error.message, body: req.body });
         } else {
-            res.status(400).send(error);
+            return res.status(400).send(error);
         }
     }
 });
@@ -55,11 +55,11 @@ userRouter.post('/login', async (req, res) => {
 
    const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET);
 
-   res.header('auth-token', token).send(token);
+   return res.send(token);
 })
 
 userRouter.get('/details', logged, (req, res) => {
-    res.send({test: req.user});
+    return res.send({test: req.user});
 })
 
 export { userRouter };
