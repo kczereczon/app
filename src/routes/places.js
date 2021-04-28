@@ -96,7 +96,7 @@ placesRouter.get('/around', logged, async (req, res) => {
                     spherical: "true"
                 }
             },
-            {$limit: 10}
+            { $limit: 10 }
         ]);
 
         res.json(places);
@@ -116,6 +116,8 @@ placesRouter.get('/suggested', logged, async (req, res) => {
     try {
         console.log(req.user._id);
         let lastTags = await UserTag.aggregate([
+            { $sort: { createdAt: -1 } },
+            { $limit: 20 },
             {
                 $group: {
                     _id: "$tag",
@@ -123,32 +125,27 @@ placesRouter.get('/suggested', logged, async (req, res) => {
                 }
             },
             { $match: { user: Schema.Types.ObjectId(req.user._id) } },
-            { $sort: { createdAt: -1 } },
-            { $limit: 20 }
+
         ]);
 
         console.log(lastTags);
 
         let tags = [];
 
+        lastTags.sort((a, b) => {
+            return b.count - a.count;
+        });
+
+        lastTags = lastTags.slice(0, 6);
+
         lastTags.forEach(tag => {
-            if(tag.count > 1) {
-                tags.push(tag._id)
-            }
+            tags.push(tag._id)
         });
 
         let whereTags = [];
 
         combRep(tags, 3).forEach(item => {
-            whereTags.push({tags: {$all: item}});
-        })
-
-        combRep(tags, 2).forEach(item => {
-            whereTags.push({tags: {$all: item}});
-        })
-
-        combRep(tags, 1).forEach(item => {
-            whereTags.push({tags: {$all: item}});
+            whereTags.push({ tags: { $all: item } });
         })
 
         console.log(whereTags);
@@ -165,12 +162,26 @@ placesRouter.get('/suggested', logged, async (req, res) => {
                 }
             },
             {
+                $addFields: {
+                    machingTags: {
+                        $size: {
+                            $filter: {
+                                input: "$tags",
+                                as: "tag",
+                                cond: { $in: ["$$tag", tags] }
+                            }
+                        }
+                    }
+                }
+            },
+            {
                 $match:
                 {
                     $or: whereTags
                 }
             },
-            {$limit: 10}
+            { $limit: 10 },
+            { $sort: { machingTags: -1 } }
         ]);
 
         res.json(places);
@@ -188,6 +199,79 @@ placesRouter.get('/:id', logged, async (req, res) => {
             await UserTag.create({ user: req.user, tag: tag })
         });
         res.json(place);
+    } catch (error) {
+        res.json(error.message)
+    }
+
+});
+
+placesRouter.get('/users/tags', logged, async (req, res) => {
+
+    try {
+        let lastTags = await UserTag.aggregate([
+            { $sort: { createdAt: -1 } },
+            { $limit: 50 },
+            {
+                $project: {
+                    name: 1,
+                    createdAt: 1,
+                    tag: 1
+                }
+            },
+            {
+                $group: {
+                    _id: "$tag",
+                    count: { $sum: 1 }
+                }
+            },
+            { $match: { user: Schema.Types.ObjectId(req.user._id) } },
+
+        ]);
+
+        lastTags.sort((a, b) => {
+            return b.count - a.count;
+        });
+
+        lastTags = lastTags.slice(0, 3);
+
+        console.log(lastTags);
+
+        let tags = []
+
+        lastTags.forEach(({ _id }) => {
+            tags.push(_id);
+        });
+
+        res.json(tags);
+    } catch (error) {
+        res.json(error.message)
+    }
+
+});
+
+placesRouter.get('/byTag/:tag', async (req, res) => {
+    try {
+        let places = await Place.aggregate([
+            {
+                $geoNear: {
+                    near: { "coordinates": [23.3369131, 50.3487476] },
+                    distanceField: "distance",
+                    maxDistance: 20000000,
+                    key: "location",
+                    includeLocs: "dist.location",
+                    spherical: "true"
+                }
+            },
+            {
+                $match:
+                {
+                    tags: { $all: [req.params.tag] }
+                }
+            },
+            { $limit: 10 },
+        ]);
+
+        res.json(places);
     } catch (error) {
         res.json(error.message)
     }
