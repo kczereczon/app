@@ -55,7 +55,7 @@ userRouter.post('/login', async (req, res) => {
 
    const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET);
 
-   return res.send(token);
+   return res.send({token: token});
 })
 
 userRouter.get('/details', logged, (req, res) => {

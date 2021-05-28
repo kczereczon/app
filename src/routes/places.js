@@ -63,32 +63,20 @@ placesRouter.get('/', async (req, res) => {
 
 placesRouter.get('/around', logged, async (req, res) => {
 
+    console.log(req.query.page);
     const localization = {
-        lat: 50.3487476,
-        lon: 23.3369131
+        lat: 50.2252137,
+        lon: 23.3854938
     }
 
     const radius = 10000 // in meters
+    let perPage = 4;
 
     try {
-        // let places = await Place.find({
-        //     location:
-        //     {
-        //         $near:
-        //         {
-        //             $geometry: {
-        //                 coordinates: [23.3369131, 50.3487476]
-        //             },
-        //             $maxDistance: radius,
-        //             distanceField: "distance"
-        //         }
-        //     }
-        // })
-
         let places = await Place.aggregate([
             {
                 $geoNear: {
-                    near: { "coordinates": [23.3369131, 50.3487476] },
+                    near: { "coordinates": [23.3854938, 50.2252137] },
                     distanceField: "distance",
                     maxDistance: 10000,
                     key: "location",
@@ -96,9 +84,9 @@ placesRouter.get('/around', logged, async (req, res) => {
                     spherical: "true"
                 }
             },
-            { $limit: 10 }
+            { $limit: req.query.page*perPage + perPage}, {$skip: req.query.page*perPage }
         ]);
-
+        console.log(places);
         res.json(places);
     } catch (error) {
         res.json(error.message)
@@ -109,8 +97,8 @@ placesRouter.get('/around', logged, async (req, res) => {
 placesRouter.get('/suggested', logged, async (req, res) => {
 
     // const localization = {
-    //     lat: 50.3487476,
-    //     lon: 23.3369131
+    //     lat: 50.2252137,
+    //     lon: 23.3854938
     // }
 
     try {
@@ -153,7 +141,7 @@ placesRouter.get('/suggested', logged, async (req, res) => {
         let places = await Place.aggregate([
             {
                 $geoNear: {
-                    near: { "coordinates": [23.3369131, 50.3487476] },
+                    near: { "coordinates": [23.3854938, 50.2252137] },
                     distanceField: "distance",
                     maxDistance: 200000,
                     key: "location",
@@ -254,7 +242,7 @@ placesRouter.get('/byTag/:tag', async (req, res) => {
         let places = await Place.aggregate([
             {
                 $geoNear: {
-                    near: { "coordinates": [23.3369131, 50.3487476] },
+                    near: { "coordinates": [23.3854938, 50.2252137] },
                     distanceField: "distance",
                     maxDistance: 20000000,
                     key: "location",
