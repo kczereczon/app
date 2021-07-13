@@ -5,18 +5,19 @@ import { viewsRouter } from "./routes/views";
 import path from "path"
 import { placesRouter } from "./routes/places";
 import cors from "cors"
+import { postsRouter } from "./routes/posts";
 
-var app = express();
-
-var jsonParser = bodyParser.json()
+const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '/views'));
 app.use(cors());
 
-app.use('/api/user/', jsonParser, userRouter)
+app.use('/api/posts/', express.json(), postsRouter)
+app.use('/api/user/', express.json(), userRouter)
 app.use('/api/places/', express.json(), placesRouter)
-app.use('/', express.urlencoded({limit: '50mb', extended: true}), viewsRouter)
 
-export {app}
+app.use('/', express.urlencoded({ limit: '50mb', extended: true }), viewsRouter)
+
+export { app }
 

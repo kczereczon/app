@@ -23,13 +23,13 @@ userRouter.post('/register', async (req, res) => {
     const genSalt = await bcrypt.genSalt(10);
     const password = await bcrypt.hash(req.body.password, genSalt);
 
-    const user = new User({
-        name: req.body.name,
-        email: req.body.email,
-        password: password
-    });
-
     try {
+
+        const user = new User({
+            name: req.body.name,
+            email: req.body.email,
+            password: password
+        });
 
         const newUser = await user.save();
         res.send(newUser);
