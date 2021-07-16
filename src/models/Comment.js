@@ -11,7 +11,7 @@ const commentSchema = new Schema({
             ref: "User"
         }   
     ],
-    content: {
+    description: {
         type: String
     }
 },{ timestamps: true })
