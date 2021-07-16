@@ -4,7 +4,7 @@ const postSchema = new Schema({
     image: {
         type: String,
     },
-    tags: [String],
+    tags: [Object],
     place: {
         type: Schema.Types.ObjectId,
         ref: "Place"

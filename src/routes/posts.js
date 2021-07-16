@@ -18,6 +18,41 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+postsRouter.put('/:id', [logged], async (req, res) => {
+    let user = req.user;
+    let newDescription = req.body.description;
+    console.log(newDescription);
+
+    let post = await Post.findById(req.params.id);
+
+    if(!post) { return res.status(404).send({error: "Post not found"})};
+    if(!post.user._id.equals(user._id)) {return res.status(401).send({error: "You don't have permission to perform that action."})}
+
+    post.description = newDescription;
+    
+    try {
+        await post.save();
+        return res.send(post);
+    } catch (error) {
+        return res.status(500).send({error: error.message});
+    }
+});
+
+postsRouter.delete('/:id', logged, async (req, res) => {
+    let user = req.user;
+    let post = await Post.findById(req.params.id);
+
+    if(!post) { return res.status(404).send({error: "Post not found"})};
+    if(!post.user._id.equals(user._id)) { return res.status(401).send({error: "You don't have permission to perform that action."})}
+
+    try {
+        let response = await post.delete();
+        return res.send({status: true});
+    } catch (error) {
+        return res.status(500).send({error: error.message});
+    }
+});
+
 postsRouter.post('/', [logged, upload.single('image')], async function (req, res) {
     let user = req.user;
     req.body.image = req.file;
@@ -56,13 +91,14 @@ postsRouter.post('/', [logged, upload.single('image')], async function (req, res
 
             const post = new Post({
                 image: result.url,
-                user: req.user,
+                user: user,
                 place: await Place.findOne({_id: req.body.place_id}),
-                description: req.body.description
+                description: req.body.description,
+                tags: tags.result.tags
             });
     
             const newPost = await post.save();
-            res.send(post);
+            return res.send(newPost);
         } catch (error) {
             if (error instanceof TypeError) {
                 return res.status(400).send({ name: error.name, message: error.message, body: req.body });
@@ -71,10 +107,8 @@ postsRouter.post('/', [logged, upload.single('image')], async function (req, res
             }
         }
 
-        res.send(tags);
-
     } catch (error) {
-        res.send(error.message);
+        return res.send(error.message);
     }
 })
 
