@@ -24,7 +24,8 @@ const userSchema = new Schema({
         required: true,
         max: 1000,
         min: 6
-    }
+    },
+    location: [{type: Number}, {type: Number}],
 }, { timestamps: true });
 
 const User = model("User", userSchema);

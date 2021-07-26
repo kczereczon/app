@@ -61,6 +61,110 @@ placesRouter.get('/', async (req, res) => {
     }
 })
 
+placesRouter.get('/find-route', logged, async (req, res) => {
+    let lat = req.body.lat;
+    let lon = req.body.lon;
+
+    console.log(lat, lon);
+
+    let distance = req.body.distance;
+    let time = req.body.maxTime;
+    let type = req.body.type;
+    let all = req.body.all;
+    let limit = req.body.limit || null;
+
+    req.user.location = [lon, lat];
+
+    await req.user.save();
+
+    try {
+        var lastTags = await getLastTags(req.user, 1000);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: error.message, code: 1001 });
+    }
+
+    try {
+        var places = await getNearPlaces(req.user, distance, limit);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: error.message, code: 1002 });
+    }
+
+    let placesWithLikePercentage = [];
+    const countOfTags = Object.values(lastTags).reduce((a, b) => a + b);
+
+    places.forEach(place => {
+        let percentage = 0;
+
+        place.tags.forEach(tag => {
+            if(lastTags[tag]) {
+                percentage += lastTags[tag] / countOfTags;
+            }
+        });
+
+        placesWithLikePercentage.push({percentage: percentage, id: place._id, distance: place.distance})
+    });
+
+    let minPercentage = Math.min.apply(Math, placesWithLikePercentage.map(function(o) { return o.percentage; }))
+    let maxPercentage = Math.max.apply(Math, placesWithLikePercentage.map(function(o) { return o.percentage; }))
+
+    let minDistance = Math.min.apply(Math, placesWithLikePercentage.map(function(o) { return o.distance; }))
+    let maxDistance = Math.max.apply(Math, placesWithLikePercentage.map(function(o) { return o.distance; }))
+
+    placesWithLikePercentage.sort((a, b) => {
+
+        let percentageDiff = b.percentage - a.percentage;
+        let percentageParam = (percentageDiff - minPercentage) / (maxPercentage - minPercentage);
+
+        let distanceDiff = a.distance - b.distance;
+        let distanceParam = (distanceDiff - minDistance) / (maxDistance - minDistance);
+
+        return percentageParam * 0.2 + distanceParam * 0.8;
+    });
+
+    return res.status(200).json({ lastTags, placesWithLikePercentage });
+})
+
+let getLastTags = async (user, limit) => {
+    let tags = await UserTag.aggregate([
+        { $sort: { createdAt: -1 } },
+        { $limit: 20 },
+        {
+            $group: {
+                _id: "$tag",
+                count: { $sum: 1 }
+            }
+        },
+        { $match: { user: Schema.Types.ObjectId(user._id) } },
+
+    ]);
+
+    let mappedTags = {}
+
+    tags.forEach(tag => {
+        mappedTags[tag._id] = tag.count;
+    });
+
+    return mappedTags;
+}
+
+let getNearPlaces = async (user, distance, limit) => {
+    console.log(user.location);
+    return await Place.aggregate([
+        {
+            $geoNear: {
+                near: { "coordinates": user.location },
+                distanceField: "distance",
+                maxDistance: parseInt(distance),
+                key: "location",
+                includeLocs: "dist.location",
+                spherical: "true"
+            }
+        },
+    ]);
+}
+
 placesRouter.get('/around', logged, async (req, res) => {
 
     const localization = {
@@ -147,8 +251,6 @@ placesRouter.get('/suggested', logged, async (req, res) => {
         combRep(tags, 3).forEach(item => {
             whereTags.push({ tags: { $all: item } });
         })
-
-        console.log(whereTags);
 
         let places = await Place.aggregate([
             {
