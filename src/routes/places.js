@@ -1,8 +1,10 @@
+import axios from "axios";
 import { Router } from "express";
 import { Schema } from "mongoose";
 import { logged } from "../middlewares/logged";
 import { Place } from "../models/Place";
 import { UserTag } from "../models/UserTag";
+import polyline from "@mapbox/polyline";
 // import cors from "cors"
 
 export const placesRouter = Router();
@@ -98,19 +100,21 @@ placesRouter.get('/find-route', logged, async (req, res) => {
         let percentage = 0;
 
         place.tags.forEach(tag => {
-            if(lastTags[tag]) {
+            if (lastTags[tag]) {
                 percentage += lastTags[tag] / countOfTags;
             }
         });
 
-        placesWithLikePercentage.push({percentage: percentage, id: place._id, distance: place.distance})
+        placesWithLikePercentage.push({ percentage: percentage, id: place._id, distance: place.distance, location: place.location })
     });
 
-    let minPercentage = Math.min.apply(Math, placesWithLikePercentage.map(function(o) { return o.percentage; }))
-    let maxPercentage = Math.max.apply(Math, placesWithLikePercentage.map(function(o) { return o.percentage; }))
+    let minPercentage = Math.min.apply(Math, placesWithLikePercentage.map(function (o) { return o.percentage; }))
+    let maxPercentage = Math.max.apply(Math, placesWithLikePercentage.map(function (o) { return o.percentage; }))
 
-    let minDistance = Math.min.apply(Math, placesWithLikePercentage.map(function(o) { return o.distance; }))
-    let maxDistance = Math.max.apply(Math, placesWithLikePercentage.map(function(o) { return o.distance; }))
+    let minDistance = Math.min.apply(Math, placesWithLikePercentage.map(function (o) { return o.distance; }))
+    let maxDistance = Math.max.apply(Math, placesWithLikePercentage.map(function (o) { return o.distance; }))
+
+    console.log(places);
 
     placesWithLikePercentage.sort((a, b) => {
 
@@ -122,6 +126,29 @@ placesRouter.get('/find-route', logged, async (req, res) => {
 
         return percentageParam * 0.2 + distanceParam * 0.8;
     });
+
+    let slicedPlaces = placesWithLikePercentage.slice(0, 10);
+    let coordinates = [req.user.location[0] + ',' + req.user.location[1]];
+
+    slicedPlaces.forEach(place => {
+        coordinates.push(place.location[0] + ',' + place.location[1]);
+    })
+
+    console.log(placesWithLikePercentage);
+
+    let coordinatesString = coordinates.join(';');
+
+    try {
+        let response = await axios.get(`https://api.mapbox.com/optimized-trips/v1/mapbox/walking/${coordinatesString}?access_token=`);
+        let geometry = response.data.trips[0].geometry;
+        let geoJson = polyline.toGeoJSON(geometry);
+        return res.status(200).json({response: response.data, geoJson: geoJson});
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: error.message, code: 1003})
+    }
+
+    
 
     return res.status(200).json({ lastTags, placesWithLikePercentage });
 })
@@ -156,7 +183,7 @@ let getNearPlaces = async (user, distance, limit) => {
             $geoNear: {
                 near: { "coordinates": user.location },
                 distanceField: "distance",
-                maxDistance: parseInt(distance),
+                maxDistance: distance,
                 key: "location",
                 includeLocs: "dist.location",
                 spherical: "true"
