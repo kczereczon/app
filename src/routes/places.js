@@ -139,7 +139,7 @@ placesRouter.get('/find-route', logged, async (req, res) => {
     let coordinatesString = coordinates.join(';');
 
     try {
-        let response = await axios.get(`https://api.mapbox.com/optimized-trips/v1/mapbox/walking/${coordinatesString}?access_token=`);
+        let response = await axios.get(`https://api.mapbox.com/optimized-trips/v1/mapbox/walking/${coordinatesString}?access_token=${process.env.MAPBOX_API_TOKEN}`);
         let geometry = response.data.trips[0].geometry;
         let geoJson = polyline.toGeoJSON(geometry);
         return res.status(200).json({response: response.data, geoJson: geoJson});
