@@ -5,8 +5,8 @@
   "main": "dist/server.js",
   "scripts": {
     "test": "jest",
-    "compile": "babel src --out-dir=dist",
-    "start": "npm run compile && node dist/server.js",
+    "build": "babel src --out-dir=dist",
+    "start": "node dist/server.js",
     "watch": "nodemon --trace-warnings --exec babel-node src/server.js",
     "fetch-data": "babel-node src/tools/googlePlacesStripper.js"
   },
