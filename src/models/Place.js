@@ -1,4 +1,4 @@
-import { model, Schema} from "mongoose";
+import { model, Schema } from "mongoose";
 
 const placeSchema = new Schema({
     name: {
@@ -17,19 +17,25 @@ const placeSchema = new Schema({
     },
     tags: [String],
     address: {
-        street: {type: String},
-        number: {type: String},
-        postal_code: {type: String},
-        city: {type: String}
+        street: { type: String },
+        number: { type: String },
+        postal_code: { type: String },
+        city: { type: String }
     },
-    image: {type: String},
-    location: [{type: Number}, {type: Number}],
+    image: { type: String },
+    location: [{ type: Number }, { type: Number }],
     other_tags: [String],
-    rating: {type: Number}
+    status: {
+        type: String,
+        enum: ['pending', 'active', 'removed', 'closed', 'rejected'],
+        default: 'pending'
+    },
+    rating: { type: Number },
+
 }, { timestamps: true });
 
-placeSchema.index({location: '2dsphere'});
+placeSchema.index({ location: '2dsphere' });
 
 const Place = model("Place", placeSchema);
 
-export {Place, placeSchema};
+export { Place, placeSchema };

@@ -5,6 +5,7 @@ import { logged } from "../middlewares/logged";
 import { Place } from "../models/Place";
 import { UserTag } from "../models/UserTag";
 import polyline from "@mapbox/polyline";
+import { admin } from "../middlewares/admin";
 // import cors from "cors"
 
 export const placesRouter = Router();
@@ -63,7 +64,7 @@ placesRouter.get('/', async (req, res) => {
     }
 })
 
-placesRouter.get('/find-route', logged, async (req, res) => {
+placesRouter.post('/find-route', logged, async (req, res) => {
     let lat = req.body.lat;
     let lon = req.body.lon;
 
@@ -74,6 +75,8 @@ placesRouter.get('/find-route', logged, async (req, res) => {
     let type = req.body.type;
     let all = req.body.all;
     let limit = req.body.limit || null;
+
+    console.log(type);
 
     req.user.location = [lon, lat];
 
@@ -105,7 +108,7 @@ placesRouter.get('/find-route', logged, async (req, res) => {
             }
         });
 
-        placesWithLikePercentage.push({ percentage: percentage, id: place._id, distance: place.distance, location: place.location })
+        placesWithLikePercentage.push({ ...place, percentage: percentage })
     });
 
     let minPercentage = Math.min.apply(Math, placesWithLikePercentage.map(function (o) { return o.percentage; }))
@@ -113,8 +116,6 @@ placesRouter.get('/find-route', logged, async (req, res) => {
 
     let minDistance = Math.min.apply(Math, placesWithLikePercentage.map(function (o) { return o.distance; }))
     let maxDistance = Math.max.apply(Math, placesWithLikePercentage.map(function (o) { return o.distance; }))
-
-    console.log(places);
 
     placesWithLikePercentage.sort((a, b) => {
 
@@ -134,21 +135,29 @@ placesRouter.get('/find-route', logged, async (req, res) => {
         coordinates.push(place.location[0] + ',' + place.location[1]);
     })
 
-    console.log(placesWithLikePercentage);
 
     let coordinatesString = coordinates.join(';');
 
     try {
-        let response = await axios.get(`https://api.mapbox.com/optimized-trips/v1/mapbox/walking/${coordinatesString}?access_token=${process.env.MAPBOX_API_TOKEN}`);
+        let response = await axios.get(`https://api.mapbox.com/optimized-trips/v1/mapbox/${type}/${coordinatesString}?access_token=${process.env.MAPBOX_API_KEY}`);
         let geometry = response.data.trips[0].geometry;
         let geoJson = polyline.toGeoJSON(geometry);
-        return res.status(200).json({response: response.data, geoJson: geoJson});
+
+        let counter = 0;
+        let temporaryArray = [];
+        for (let i = 1; i < response.data.waypoints.length; i++) {
+            response.data.waypoints[i].place = slicedPlaces[counter++];
+            temporaryArray[response.data.waypoints[i]['waypoint_index'] - 1] = response.data.waypoints[i];
+        }
+
+        response.data.waypoints = temporaryArray;
+
+        return res.status(200).json({ response: response.data, geoJson: geoJson });
+
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ error: error.message, code: 1003})
+        return res.status(500).json({ error: error.message, code: 1003 })
     }
-
-    
 
     return res.status(200).json({ lastTags, placesWithLikePercentage });
 })
@@ -167,7 +176,7 @@ let getLastTags = async (user, limit) => {
 
     ]);
 
-    let mappedTags = {}
+    let mappedTags = { }
 
     tags.forEach(tag => {
         mappedTags[tag._id] = tag.count;
@@ -193,29 +202,8 @@ let getNearPlaces = async (user, distance, limit) => {
 }
 
 placesRouter.get('/around', logged, async (req, res) => {
-
-    const localization = {
-        lat: 50.3487476,
-        lon: 23.3369131
-    }
-
-    const radius = 10000 // in meters
-
+    //TODO: Remove hardcode
     try {
-        // let places = await Place.find({
-        //     location:
-        //     {
-        //         $near:
-        //         {
-        //             $geometry: {
-        //                 coordinates: [23.3369131, 50.3487476]
-        //             },
-        //             $maxDistance: radius,
-        //             distanceField: "distance"
-        //         }
-        //     }
-        // })
-
         let places = await Place.aggregate([
             {
                 $geoNear: {
@@ -320,6 +308,31 @@ placesRouter.get('/suggested', logged, async (req, res) => {
 
 });
 
+placesRouter.get('/all', logged, async (req, res) => {
+    try {
+        let places = await Place.aggregate([
+            {
+                $geoNear: {
+                    near: { "coordinates": [23.3369131, 50.3487476] },
+                    distanceField: "distance",
+                    key: "location",
+                    includeLocs: "dist.location",
+                    spherical: "true"
+                }
+            },
+            // {
+            //     $match: {
+            //         status: "active",
+            //     }
+            // }
+        ]);
+        res.json(places);
+    } catch (error) {
+        res.json(error.message)
+    }
+
+});
+
 placesRouter.get('/:id', logged, async (req, res) => {
 
     try {
@@ -327,6 +340,7 @@ placesRouter.get('/:id', logged, async (req, res) => {
         place.tags.forEach(async (tag) => {
             await UserTag.create({ user: req.user, tag: tag })
         });
+        console.log('user: added tag');
         res.json(place);
     } catch (error) {
         res.json(error.message)
@@ -407,6 +421,43 @@ placesRouter.get('/byTag/:tag', async (req, res) => {
 
 });
 
+placesRouter.get('/pending', [logged, admin], async (req, res) => {
+    try {
+        let places = await Place.aggregate([
+            {
+                $match: {
+                    status: 'pending'
+                }
+            }
+        ]);
+        res.json(places);
+    } catch (error) {
+        res.json(error.message)
+    }
+
+});
+
+placesRouter.post('/accept/:id', [logged, admin], async (req, res) => {
+    try {
+        let place = await Place.findById(req.params.id);
+        place.status = 'active';
+        place.save();
+        res.json(place);
+    } catch (error) {
+        res.json(error.message)
+    }
+});
+
+placesRouter.post('/reject/:id', [logged, admin], async (req, res) => {
+    try {
+        let place = await Place.findById(req.params.id);
+        place.status = 'rejected';
+        place.save();
+        res.json(place);
+    } catch (error) {
+        res.json(error.message)
+    }
+});
 
 function combRep(arr, l) {
     if (l === void 0) l = arr.length; // Length of the combinations

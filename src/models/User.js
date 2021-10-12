@@ -26,6 +26,7 @@ const userSchema = new Schema({
         min: 6
     },
     location: [{type: Number}, {type: Number}],
+    admin: {type: Boolean, default: false}
 }, { timestamps: true });
 
 const User = model("User", userSchema);

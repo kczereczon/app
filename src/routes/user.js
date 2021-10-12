@@ -58,6 +58,23 @@ userRouter.post('/login', async (req, res) => {
    return res.send({"jwt": token});
 })
 
+userRouter.post('/loginAdmin', async (req, res) => {
+    const error = loginValidate(req.body);
+    if(error) return res.status(400).send({error: "Invalid email or password"});
+    
+    const user = await User.findOne({email: req.body.email});
+    if(!user) return res.status(400).send({error: "Invalid email or password"});
+ 
+    const checkPassword = await bcrypt.compare(req.body.password, user.password);
+    if(!checkPassword) return res.status(400).send({error: "Invalid email or password"});
+
+    if(!user.admin) return res.status(401).send({error: "You don't have permission to access this page."});
+ 
+    const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET);
+ 
+    return res.send({"jwt": token});
+})
+
 userRouter.get('/details', logged, (req, res) => {
     return res.send({test: req.user});
 })
