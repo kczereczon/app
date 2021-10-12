@@ -9,7 +9,7 @@ dotenv.config();
 let connection = initDatabase();
 
 connection.then(() => {
-    app.listen(3333, () => {
+    app.listen(80, () => {
         console.log("Server running on http://localhost:3333");
     });
 }).catch((error) => {
