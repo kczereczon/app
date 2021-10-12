@@ -190,7 +190,7 @@ let getNearPlaces = async (user, distance, limit) => {
     return await Place.aggregate([
         {
             $geoNear: {
-                near: { "coordinates": user.location },
+                near: { "coordinates": req.user.location },
                 distanceField: "distance",
                 maxDistance: distance,
                 key: "location",
@@ -207,7 +207,7 @@ placesRouter.get('/around', logged, async (req, res) => {
         let places = await Place.aggregate([
             {
                 $geoNear: {
-                    near: { "coordinates": [23.3369131, 50.3487476] },
+                    near: { "coordinates": req.user.location },
                     distanceField: "distance",
                     maxDistance: 10000,
                     key: "location",
@@ -270,7 +270,7 @@ placesRouter.get('/suggested', logged, async (req, res) => {
         let places = await Place.aggregate([
             {
                 $geoNear: {
-                    near: { "coordinates": [23.3369131, 50.3487476] },
+                    near: { "coordinates": req.user.location },
                     distanceField: "distance",
                     maxDistance: 200000,
                     key: "location",
@@ -313,7 +313,7 @@ placesRouter.get('/all', logged, async (req, res) => {
         let places = await Place.aggregate([
             {
                 $geoNear: {
-                    near: { "coordinates": [23.3369131, 50.3487476] },
+                    near: { "coordinates": req.user.location },
                     distanceField: "distance",
                     key: "location",
                     includeLocs: "dist.location",
@@ -392,12 +392,12 @@ placesRouter.get('/users/tags', logged, async (req, res) => {
 
 });
 
-placesRouter.get('/byTag/:tag', async (req, res) => {
+placesRouter.get('/byTag/:tag', logged, async (req, res) => {
     try {
         let places = await Place.aggregate([
             {
                 $geoNear: {
-                    near: { "coordinates": [23.3369131, 50.3487476] },
+                    near: { "coordinates": req.user.location },
                     distanceField: "distance",
                     maxDistance: 20000000,
                     key: "location",

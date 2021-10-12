@@ -79,4 +79,11 @@ userRouter.get('/details', logged, (req, res) => {
     return res.send({test: req.user});
 })
 
+userRouter.post('/location', logged, (req, res) => {
+    req.user.location[0] = req.body.lon;
+    req.user.location[1] = req.body.lat;
+    req.user.save();
+    return res.send({"success": true});
+})
+
 export { userRouter };
