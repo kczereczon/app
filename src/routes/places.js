@@ -70,13 +70,17 @@ placesRouter.post('/find-route', logged, async (req, res) => {
 
     console.log(lat, lon);
 
-    let user = req.user;
-
     let distance = req.body.distance;
     let time = req.body.maxTime;
     let type = req.body.type;
     let all = req.body.all;
     let limit = req.body.limit || null;
+
+    req.user.location = [lon, lat];
+
+    await req.user.save();
+
+    let user = req.user;
 
     try {
         var lastTags = await getLastTags(user, 1000);
