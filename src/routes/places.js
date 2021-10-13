@@ -70,27 +70,23 @@ placesRouter.post('/find-route', logged, async (req, res) => {
 
     console.log(lat, lon);
 
+    let user = req.user;
+
     let distance = req.body.distance;
     let time = req.body.maxTime;
     let type = req.body.type;
     let all = req.body.all;
     let limit = req.body.limit || null;
 
-    console.log(type);
-
-    req.user.location = [lon, lat];
-
-    await req.user.save();
-
     try {
-        var lastTags = await getLastTags(req.user, 1000);
+        var lastTags = await getLastTags(user, 1000);
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error: error.message, code: 1001 });
     }
 
     try {
-        var places = await getNearPlaces(req.user, distance, limit);
+        var places = await getNearPlaces(user, distance, limit);
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error: error.message, code: 1002 });
@@ -190,7 +186,7 @@ let getNearPlaces = async (user, distance, limit) => {
     return await Place.aggregate([
         {
             $geoNear: {
-                near: { "coordinates": req.user.location },
+                near: { "coordinates": user.location },
                 distanceField: "distance",
                 maxDistance: distance,
                 key: "location",
