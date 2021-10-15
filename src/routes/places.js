@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Router } from "express";
 import { Schema } from "mongoose";
+import mongoose from "mongoose";
 import { logged } from "../middlewares/logged";
 import { Place } from "../models/Place";
 import { UserTag } from "../models/UserTag";
@@ -9,6 +10,7 @@ import { admin } from "../middlewares/admin";
 // import cors from "cors"
 
 export const placesRouter = Router();
+
 
 placesRouter.get('/nodes', async (req, res) => {
 
@@ -63,6 +65,21 @@ placesRouter.get('/', async (req, res) => {
         res.json(error);
     }
 })
+
+placesRouter.get('/address/geocode', [logged], async (req, res) => {
+
+    let lat = req.query.lat;
+    let lon = req.query.lon;
+
+    try {
+        let response = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lon},${lat}.json?types=address&access_token=${process.env.MAPBOX_API_KEY}`);
+        
+        return res.status(200).json({ response: response.data });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: error.message, code: 1003 })
+    }
+});
 
 placesRouter.post('/find-route', logged, async (req, res) => {
     let lat = req.body.lat;
@@ -163,7 +180,10 @@ placesRouter.post('/find-route', logged, async (req, res) => {
 })
 
 let getLastTags = async (user, limit) => {
+    let user_id = mongoose.Types.ObjectId(user._id);
+
     let tags = await UserTag.aggregate([
+        { $match: { user: user_id } },
         { $sort: { createdAt: -1 } },
         { $limit: 20 },
         {
@@ -172,8 +192,6 @@ let getLastTags = async (user, limit) => {
                 count: { $sum: 1 }
             }
         },
-        { $match: { user: Schema.Types.ObjectId(user._id) } },
-
     ]);
 
     let mappedTags = { }
@@ -232,9 +250,12 @@ placesRouter.get('/suggested', logged, async (req, res) => {
     //     lon: 23.3369131
     // }
 
+    let user_id = mongoose.Types.ObjectId(req.user._id);
+
     try {
         console.log(req.user._id);
         let lastTags = await UserTag.aggregate([
+            { $match: { user: user_id } },
             { $sort: { createdAt: -1 } },
             { $limit: 20 },
             {
@@ -243,7 +264,6 @@ placesRouter.get('/suggested', logged, async (req, res) => {
                     count: { $sum: 1 }
                 }
             },
-            { $match: { user: Schema.Types.ObjectId(req.user._id) } },
 
         ]);
 
