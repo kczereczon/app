@@ -7,9 +7,22 @@ import { Place } from "../models/Place";
 import { UserTag } from "../models/UserTag";
 import polyline from "@mapbox/polyline";
 import { admin } from "../middlewares/admin";
+import { createPostValidation } from "../validations/place";
+import multer from "multer";
+import cloudinary from "cloudinary";
+import streamifier from "streamifier";
+import { taggorizeUrl } from "../core/imagga";
 // import cors from "cors"
 
 export const placesRouter = Router();
+
+let upload = multer();
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 
 placesRouter.get('/nodes', async (req, res) => {
@@ -495,3 +508,75 @@ function combRep(arr, l) {
     })(0, 0);                        // Start at index 0
     return results;                  // Return results
 }
+
+placesRouter.post('/', [logged, upload.single('image')], async (req, res) => {
+    let user = req.user;
+    req.body.image = req.file;
+    console.log(req.body);
+
+    const error = createPostValidation(req.body);
+    if (error) return res.status(400).send({ error: error });
+
+    let streamUpload = (req) => {
+        return new Promise((resolve, reject) => {
+            let stream = cloudinary.v2.uploader.upload_stream({
+                folder: "places"
+            },
+                (error, result) => {
+                    if (result) {
+                        resolve(result);
+                    } else {
+                        reject(error);
+                    }
+                }
+            );
+
+            streamifier.createReadStream(req.file.buffer).pipe(stream);
+        });
+    };
+
+    async function upload(req) {
+        let result = await streamUpload(req);
+        return result;
+    }
+
+    try {
+        let result = await upload(req);
+
+        console.log(result);
+
+        let tags = await taggorizeUrl(result.url);
+
+        try {
+
+            const place = new Place({
+                image: result.url,
+                name: req.body.name,
+                description: req.body.description,
+                tags: tags.result.tags,
+                location: [req.body.lat, req.body.lon],
+                address: {
+                    street: req.body.street,
+                    number: req.body.number,
+                    postal_code: req.body.postal_code,
+                    city: req.body.city
+                },
+            });
+    
+            const placeCreated = await place.save();
+            return res.send(placeCreated);
+        } catch (error) {
+
+            console.log(error);
+
+            if (error instanceof TypeError) {
+                return res.status(400).send({ name: error.name, message: error.message, body: req.body });
+            } else {
+                return res.status(400).send(error);
+            }
+        }
+
+    } catch (error) {
+        return res.send(error.message);
+    }
+})

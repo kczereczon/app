@@ -15,7 +15,7 @@ const placeSchema = new Schema({
         max: 2000,
         min: 4
     },
-    tags: [String],
+    tags: [{}],
     address: {
         street: { type: String },
         number: { type: String },
