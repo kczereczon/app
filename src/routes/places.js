@@ -554,7 +554,7 @@ placesRouter.post('/', [logged, upload.single('image')], async (req, res) => {
                 name: req.body.name,
                 description: req.body.description,
                 tags: tags.result.tags,
-                location: [req.body.lat, req.body.lon],
+                location: [req.body.lon, req.body.lat],
                 address: {
                     street: req.body.street,
                     number: req.body.number,
