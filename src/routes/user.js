@@ -80,8 +80,7 @@ userRouter.get('/details', logged, (req, res) => {
 })
 
 userRouter.post('/location', logged, (req, res) => {
-    req.user.location[0] = req.body.lon;
-    req.user.location[1] = req.body.lat;
+    req.user.location = [req.body.lon, req.body.lat];
     req.user.save();
     return res.send({"success": true});
 })
