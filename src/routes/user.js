@@ -15,10 +15,10 @@ userRouter.post('/register', async (req, res) => {
     if (error) res.status(400).send({ error: error });
 
     const emailExists = await User.findOne({email: req.body.email});
-    if(emailExists) return res.status(400).send({error: "Email already exists"});
+    if(emailExists) return res.status(400).send({error: "Email already exists", field: "email", code: 1001});
 
     const nameExists = await User.findOne({name: req.body.name});
-    if(nameExists) return res.status(400).send({error: "Username already exists"});
+    if(nameExists) return res.status(400).send({error: "Username already exists", field: "username", code: 1002});
 
     const genSalt = await bcrypt.genSalt(10);
     const password = await bcrypt.hash(req.body.password, genSalt);
