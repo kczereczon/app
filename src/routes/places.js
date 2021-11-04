@@ -240,7 +240,7 @@ placesRouter.get('/around', logged, async (req, res) => {
                 $geoNear: {
                     near: { "coordinates": req.user.location },
                     distanceField: "distance",
-                    maxDistance: 10000,
+                    maxDistance: 70000,
                     key: "location",
                     includeLocs: "dist.location",
                     spherical: "true"
