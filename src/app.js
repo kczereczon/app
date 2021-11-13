@@ -7,6 +7,7 @@ import { placesRouter } from "./routes/places";
 import cors from "cors"
 import { postsRouter } from "./routes/posts";
 import { commentsRouter } from "./routes/comments";
+import { commentsPlaceRouter } from "./routes/commentsPlace";
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(cors());
 
 app.use('/api/posts/', express.json(), postsRouter)
 app.use('/api/comments/', express.json(), commentsRouter)
+app.use('/api/comments/places/', express.json(), commentsPlaceRouter)
 app.use('/api/user/', express.json(), userRouter)
 app.use('/api/places/', express.json(), placesRouter)
 
