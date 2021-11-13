@@ -57,7 +57,7 @@ commentsPlaceRouter.post('/', [logged], async function (req, res) {
         const comment = new CommentPlace({
             user: user,
             place: place,
-            rating: rating,
+            // rating: rating,
             description: req.body.description,
         });
 
