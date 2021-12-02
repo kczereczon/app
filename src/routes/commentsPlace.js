@@ -73,7 +73,7 @@ commentsPlaceRouter.get('/place/:id', [logged], async (req, res) => {
     if(!place) { return res.status(404).send({ error: "Place not found."})};
 
     try {
-        let comments = await CommentPlace.find({place: req.params.id}).populate('user');
+        let comments = await CommentPlace.find({place: req.params.id}).sort({ createdAt: -1}).limit(10).populate('user');
 
         return res.send(comments);
     } catch (error) {
