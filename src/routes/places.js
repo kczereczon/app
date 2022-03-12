@@ -154,6 +154,7 @@ placesRouter.post('/find-route', logged, async (req, res) => {
         let wd = normalizedPercentage * 0.2 * normalizedDistance * 0.8;
 
         place.wd = wd;
+        console.log(place);
     })
 
     placesWithLikePercentage.sort((a, b) => {
