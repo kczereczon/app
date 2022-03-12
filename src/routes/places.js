@@ -172,7 +172,7 @@ placesRouter.post('/find-route', logged, async (req, res) => {
             tags: place.tags,
             normalizedPercentage: place.nPercentage,
             normalizedDistance: place.nDistance,
-            percentage: place.percentage, 
+            percentage: place.percentage,
             distance: place.distance,
             wd: place.wd,
         });
@@ -219,6 +219,7 @@ let getLastTags = async (user, limit) => {
                 count: { $sum: 1 }
             }
         },
+        { $sort: { count: -1 } }
     ]);
 
     let mappedTags = {}
@@ -272,11 +273,6 @@ placesRouter.get('/around', logged, async (req, res) => {
 
 placesRouter.get('/suggested', logged, async (req, res) => {
 
-    // const localization = {
-    //     lat: 50.3487476,
-    //     lon: 23.3369131
-    // }
-
     let user_id = mongoose.Types.ObjectId(req.user._id);
 
     try {
@@ -291,16 +287,10 @@ placesRouter.get('/suggested', logged, async (req, res) => {
                     count: { $sum: 1 }
                 }
             },
-
+            { $sort: { count: -1 } }
         ]);
 
-        console.log(lastTags);
-
         let tags = [];
-
-        lastTags.sort((a, b) => {
-            return b.count - a.count;
-        });
 
         lastTags = lastTags.slice(0, 6);
 
