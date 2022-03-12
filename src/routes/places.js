@@ -151,7 +151,7 @@ placesRouter.post('/find-route', logged, async (req, res) => {
     placesWithLikePercentage.forEach(function (place) {
         let normalizedPercentage = (place.percentage - minPercentage) / (maxPercentage - minPercentage);
         let normalizedDistance = (place.distance - minDistance) / (maxDistance - minDistance);
-        let wd = normalizedPercentage * 0.2 + normalizedDistance * 0.8;
+        let wd = normalizedPercentage * 0.2 + (1 - normalizedDistance) * 0.8;
 
 
         place.nPercentage = normalizedPercentage;
