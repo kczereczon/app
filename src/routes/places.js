@@ -153,8 +153,10 @@ placesRouter.post('/find-route', logged, async (req, res) => {
         let normalizedDistance = (place.distance - minDistance) / (maxDistance - minDistance);
         let wd = normalizedPercentage * 0.2 * normalizedDistance * 0.8;
 
+
+        place.nPercentage = normalizedPercentage;
+        place.nDistance = normalizedDistance;
         place.wd = wd;
-        console.log(place);
     })
 
     placesWithLikePercentage.sort((a, b) => {
@@ -165,6 +167,7 @@ placesRouter.post('/find-route', logged, async (req, res) => {
     let coordinates = [req.user.location[0] + ',' + req.user.location[1]];
 
     slicedPlaces.forEach(place => {
+        console.log(place.name, place.tags, place.nPercentage, place.nDistance, place.percentage);
         coordinates.push(place.location[0] + ',' + place.location[1]);
     })
 
