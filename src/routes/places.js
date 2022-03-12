@@ -114,6 +114,7 @@ placesRouter.post('/find-route', logged, async (req, res) => {
 
     try {
         var lastTags = await getLastTags(user, 1000);
+        console.log(lastTags);
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error: error.message, code: 1001 });
@@ -147,15 +148,16 @@ placesRouter.post('/find-route', logged, async (req, res) => {
     let minDistance = Math.min.apply(Math, placesWithLikePercentage.map(function (o) { return o.distance; }))
     let maxDistance = Math.max.apply(Math, placesWithLikePercentage.map(function (o) { return o.distance; }))
 
+    placesWithLikePercentage.forEach(function (place) {
+        let normalizedPercentage = (place.percentage - minPercentage) / (maxPercentage - minPercentage);
+        let normalizedDistance = (place.distance - minDistance) / (maxDistance - minDistance);
+        let wd = normalizedPercentage * 0.2 * normalizedDistance * 0.8;
+
+        place.wd = wd;
+    })
+
     placesWithLikePercentage.sort((a, b) => {
-
-        let percentageDiff = b.percentage - a.percentage;
-        let percentageParam = (percentageDiff - minPercentage) / (maxPercentage - minPercentage);
-
-        let distanceDiff = a.distance - b.distance;
-        let distanceParam = (distanceDiff - minDistance) / (maxDistance - minDistance);
-
-        return percentageParam * 0.2 + distanceParam * 0.8;
+        return a.wd - b.wd;
     });
 
     let slicedPlaces = placesWithLikePercentage.slice(0, 10);
