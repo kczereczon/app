@@ -113,7 +113,7 @@ placesRouter.post('/find-route', logged, async (req, res) => {
     let user = req.user;
 
     try {
-        var lastTags = await getLastTags(user, 1000);
+        var lastTags = await getLastTags(user, 100);
         console.log(lastTags);
     } catch (error) {
         console.log(error);
@@ -212,7 +212,7 @@ let getLastTags = async (user, limit) => {
     let tags = await UserTag.aggregate([
         { $match: { user: user_id } },
         { $sort: { createdAt: -1 } },
-        { $limit: 20 },
+        { $limit: limit },
         {
             $group: {
                 _id: "$tag",
@@ -280,7 +280,7 @@ placesRouter.get('/suggested', logged, async (req, res) => {
         let lastTags = await UserTag.aggregate([
             { $match: { user: user_id } },
             { $sort: { createdAt: -1 } },
-            { $limit: 20 },
+            { $limit: 100 },
             {
                 $group: {
                     _id: "$tag",
