@@ -172,7 +172,9 @@ placesRouter.post('/find-route', logged, async (req, res) => {
             tags: place.tags,
             normalizedPercentage: place.nPercentage,
             normalizedDistance: place.nDistance,
-            percentage: place.percentage, wd: place.wd
+            percentage: place.percentage, 
+            distance: place.distance,
+            wd: place.wd,
         });
         coordinates.push(place.location[0] + ',' + place.location[1]);
     })
