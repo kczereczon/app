@@ -86,7 +86,7 @@ placesRouter.get('/address/geocode', [logged], async (req, res) => {
 
     try {
         let response = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lon},${lat}.json?types=address&access_token=${process.env.MAPBOX_API_KEY}`);
-        
+
         return res.status(200).json({ response: response.data });
     } catch (error) {
         console.log(error);
@@ -167,7 +167,13 @@ placesRouter.post('/find-route', logged, async (req, res) => {
     let coordinates = [req.user.location[0] + ',' + req.user.location[1]];
 
     slicedPlaces.forEach(place => {
-        console.log(place.name, place.tags, place.nPercentage, place.nDistance, place.percentage);
+        console.log({
+            name: place.name,
+            tags: place.tags,
+            normalizedPercentage: place.nPercentage,
+            normalizedDistance: place.nDistance,
+            percentage: place.percentage, wd: place.wd
+        });
         coordinates.push(place.location[0] + ',' + place.location[1]);
     })
 
@@ -213,7 +219,7 @@ let getLastTags = async (user, limit) => {
         },
     ]);
 
-    let mappedTags = { }
+    let mappedTags = {}
 
     tags.forEach(tag => {
         mappedTags[tag._id] = tag.count;
@@ -568,7 +574,7 @@ placesRouter.post('/', [logged, upload.single('image')], async (req, res) => {
                     city: req.body.city
                 },
             });
-    
+
             const placeCreated = await place.save();
             return res.send(placeCreated);
         } catch (error) {
